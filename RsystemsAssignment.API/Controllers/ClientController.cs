@@ -19,9 +19,9 @@ namespace RsystemsAssignment.API.Controllers
             _clientService = clientService;
         }
         [HttpGet("Index")]
-        public async Task<ClientApiResponse> Index(int pageIndex, int pageSize)
+        public async Task<ClientApiResponse> Index(int pageIndex, int pageSize, int accountID)
         {
-            return await _clientService.GetAllAsync(pageIndex, pageSize);
+            return await _clientService.GetAllAsync(pageIndex, pageSize,accountID);
         }
 
         [HttpGet("Details/id")]
@@ -37,7 +37,7 @@ namespace RsystemsAssignment.API.Controllers
             {
                 return await _clientService.AddClientAsync(dto);
             }
-            catch
+            catch(Exception ex)
             {
                 return null;
             }
@@ -57,11 +57,11 @@ namespace RsystemsAssignment.API.Controllers
         }
 
         [HttpDelete("Delete")]
-        public async Task<bool> Delete(int id)
+        public async Task<bool> Delete(int id, int accountID)
         {
             try
             {
-                return await _clientService.DeleteClientAsync(id);
+                return await _clientService.DeleteClientAsync(id,accountID);
             }
             catch
             {

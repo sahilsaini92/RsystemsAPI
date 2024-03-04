@@ -12,7 +12,7 @@ namespace RSystemsAssignment.Data.DTO
     {
         public int ClientID { get; set; }
         public string ClientName { get; set; }
-        public AccountDTO? Account { get; set; }
+        public string AccountName { get; set; }
         public int AccountID { get; set; }
         public DateTime? CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }

@@ -36,7 +36,7 @@ namespace RsystemsAssignment.Tests
             _mockMapper = new Mock<IMapper>();
             repository = new Mock<IClientService>();
             repository.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(MockData.GetClient());
-            repository.Setup(repo => repo.GetAllAsync(0,25)).ReturnsAsync(MockData.GetClients());
+            repository.Setup(repo => repo.GetAllAsync(0,25,1)).ReturnsAsync(MockData.GetClients());
             repository.Setup(db => db.AddClientAsync(MockData.GetClient())).ReturnsAsync(MockData.GetClient());
             _mockDbContext.Setup(db => db.SaveChangesAsync(CancellationToken.None)).ReturnsAsync(1); // Return a completed task with a result of 1
 

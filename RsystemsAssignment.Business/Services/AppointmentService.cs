@@ -4,8 +4,12 @@ using RsystemsAssignment.Business.Interfaces;
 using RsystemsAssignment.Data;
 using RsystemsAssignment.Data.DTO;
 using RSystemsAssignment.Data.DTO;
+using RSystemsAssignment.Data.Entities;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,14 +28,22 @@ namespace RsystemsAssignment.Business.Services
         }
         public async Task<AppointmentApiResponse> GetAllAsync(int pageNumber, int pageSize)
         {
-            AppointmentApiResponse apiResponse = new AppointmentApiResponse();
-            var query = _dbContext.Appointment;
-            apiResponse.TotalCount = query.Count();
-            var data = await query.Include(a=>a.Client).Skip(pageNumber * pageSize)
-                         .Take(pageSize).ToListAsync();
-            var mappedData = _mapper.Map<List<AppointmentDTO>>(data);
-            apiResponse.Appointments = mappedData;
-            return apiResponse;
+            try
+            {
+                AppointmentApiResponse apiResponse = new AppointmentApiResponse();
+                var parameter = new Microsoft.Data.SqlClient.SqlParameter("@MonthNumber", DateTime.UtcNow.Month);
+                var data = await _dbContext.Appointment.FromSqlRaw("EXEC usp_select_appointment_shardDB @MonthNumber", parameter)
+                    .ToListAsync();
+                apiResponse.TotalCount = data.Count;
+                data = data.Skip(pageNumber * pageSize).Take(pageSize).ToList();
+                var mappedData = _mapper.Map<List<AppointmentDTO>>(data);
+                apiResponse.Appointments = mappedData;
+                return apiResponse;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
         public async Task<AppointmentDTO> GetByIdAsync(int id)
         {
@@ -42,41 +54,40 @@ namespace RsystemsAssignment.Business.Services
         public async Task<AppointmentDTO> AddAppointmentAsync(AppointmentDTO appointmentDTO)
         {
             var mappedData = _mapper.Map<AppointmentDTO>(appointmentDTO);
-            await _dbContext.AddAsync(mappedData);
-            await _dbContext.SaveChangesAsync();
-            var insertedRecord = _dbContext.Appointment.Find(_dbContext.Appointment.Max(p => p.AppointmentID));
-            var record = _mapper.Map<AppointmentDTO>(insertedRecord);
-            return record;
+            var accountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", appointmentDTO.AccountID);
+            var clientID = new Microsoft.Data.SqlClient.SqlParameter("@ClientID", appointmentDTO.ClientID);
+            var appointmentStartTime = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentStartTime", appointmentDTO.AppointmentStartTime);
+            var appointmentEndTime = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentEndTime", appointmentDTO.AppointmentEndTime);
+            var data = await _dbContext.Appointment.FromSqlRaw("EXEC usp_insert_appointment_shardDB @AccountID, @ClientID, @AppointmentStartTime, @AppointmentEndTime", accountID, clientID, appointmentStartTime, appointmentEndTime)
+                .ToListAsync();            
+            //var record = _mapper.Map<AppointmentDTO>(data);
+            return null;
         }
         public async Task<AppointmentDTO> UpdateAppointmentAsync(AppointmentDTO appointmentDTO)
         {
             try
             {
-                var dbRecord = await _dbContext.Appointment.Where(a => a.AppointmentID == appointmentDTO.AppointmentID).FirstOrDefaultAsync();
-                if (dbRecord != null)
-                {
-                    var mappedData = _mapper.Map(appointmentDTO, dbRecord);
-                    dbRecord.ModifiedDate = DateTime.UtcNow;
-                    await _dbContext.SaveChangesAsync();
-                }
+                var appointmentID = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentID", appointmentDTO.AppointmentID);
+                var accountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", appointmentDTO.AccountID);
+                var clientID = new Microsoft.Data.SqlClient.SqlParameter("@ClientID", appointmentDTO.ClientID);
+                var appointmentStartTime = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentStartTime", appointmentDTO.AppointmentStartTime.AddDays(1));
+                var appointmentEndTime = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentEndTime", appointmentDTO.AppointmentEndTime);
+                var data = await _dbContext.Appointment.FromSqlRaw("EXEC usp_update_appointment_shardDB @AppointmentID, @AccountID, @ClientID, @AppointmentStartTime, @AppointmentEndTime",appointmentID, accountID, clientID, appointmentStartTime, appointmentEndTime)
+                    .ToListAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return null;
             }
             return null;
         }
 
-        public async Task<bool> DeleteAppointmentAsync(int id)
+        public async Task<bool> DeleteAppointmentAsync(int appointmentID, int accountID)
         {
-            var dbRecord = await _dbContext.Appointment.Where(a => a.AppointmentID == id).FirstOrDefaultAsync();
-            if (dbRecord != null)
-            {
-                _dbContext.Appointment.Remove(dbRecord);
-                await _dbContext.SaveChangesAsync();
-                return true;
-            }
-            return false;
+            var AppointmentID = new Microsoft.Data.SqlClient.SqlParameter("@AppoinmentID", appointmentID);
+            var AccountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", accountID);
+            var data = await _dbContext.Appointment.FromSqlRaw("EXEC usp_delete_appointment_shardDB @AccountID,@AppoinmentID", AccountID, AppointmentID).ToListAsync();
+            return true;
         }
     }
 }

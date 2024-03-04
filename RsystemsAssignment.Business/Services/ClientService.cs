@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using RsystemsAssignment.Business.Interfaces;
 using RsystemsAssignment.Data;
 using RsystemsAssignment.Data.DTO;
@@ -7,6 +9,7 @@ using RSystemsAssignment.Data.DTO;
 using RSystemsAssignment.Data.Entities;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,17 +25,22 @@ namespace RsystemsAssignment.Business.Services
             _dbContext = dbContext;
             _mapper = mapper;
         }
-        public async Task<ClientApiResponse> GetAllAsync(int pageIndex, int pageSize)
+        public async Task<ClientApiResponse> GetAllAsync(int pageIndex, int pageSize,int accountID)
         {
             ClientApiResponse apiResponse = new ClientApiResponse();
-            var query = _dbContext.Clients;
-            apiResponse.TotalCount = query.Count();
-            var data = await query.Include(c => c.Account).Skip(pageIndex * pageSize)
-                         .Take(pageSize).ToListAsync();
+            var parameter = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", accountID);
+            var data = await _dbContext.Clients.FromSqlRaw("EXEC usp_select_client_shardDB @AccountID", parameter)
+                .ToListAsync();
+           
+            apiResponse.TotalCount = data.Count;
+            data = data.Skip(pageIndex * pageSize)
+                         .Take(pageSize).ToList();
+
             var mappedData = _mapper.Map<List<ClientDTO>>(data);
             apiResponse.Clients = mappedData;
             return apiResponse;
         }
+
         public async Task<ClientDTO> GetByIdAsync(int id)
         {
             var data = await _dbContext.Clients.Where(x => x.ClientID == id).FirstOrDefaultAsync();
@@ -44,24 +52,23 @@ namespace RsystemsAssignment.Business.Services
             var mappedData = _mapper.Map<Client>(clientDTO);
             mappedData.CreatedDate = DateTime.Now;
             mappedData.ModifiedDate = null;
-            await _dbContext.AddAsync(mappedData);
-            await _dbContext.SaveChangesAsync();
-            var insertedRecord = _dbContext.Clients.Find(_dbContext.Clients.Max(p => p.ClientID));
-            var record = _mapper.Map<ClientDTO>(insertedRecord);
-            return record;
+
+            var accountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", clientDTO.AccountID);
+            var clientName = new Microsoft.Data.SqlClient.SqlParameter("@ClientName", clientDTO.ClientName);
+            var data = await _dbContext.Clients.FromSqlRaw("EXEC usp_insert_client_shardDB @AccountID, @ClientName", accountID, clientName)
+                .ToListAsync();
+
+            return null;
         }
         public async Task<ClientDTO> UpdateClientAsync(ClientDTO clientDTO)
         {
             try
             {
-                var dbRecord = await _dbContext.Clients.Where(a => a.ClientID == clientDTO.ClientID).FirstOrDefaultAsync();
-                if (dbRecord != null)
-                {
-                    var mappedData = _mapper.Map(clientDTO, dbRecord);
-                    dbRecord.ModifiedDate = DateTime.UtcNow;
-                    dbRecord.Account.ModifiedDate = DateTime.UtcNow;
-                    await _dbContext.SaveChangesAsync();
-                }
+                var accountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", clientDTO.AccountID);
+                var clientID = new Microsoft.Data.SqlClient.SqlParameter("@ClientID", clientDTO.ClientID);
+                var clientName = new Microsoft.Data.SqlClient.SqlParameter("@ClientName", clientDTO.ClientName);
+                var data =await _dbContext.Clients.FromSqlRaw("EXEC usp_update_client_shardDB @AccountID, @ClientID, @ClientName", accountID, clientID, clientName)
+                    .ToListAsync();
                 return null;
             }
             catch (Exception exp)
@@ -70,16 +77,12 @@ namespace RsystemsAssignment.Business.Services
             }
         }
 
-        public async Task<bool> DeleteClientAsync(int id)
+        public async Task<bool> DeleteClientAsync(int id,int accountID)
         {
-            var dbRecord = await _dbContext.Clients.Where(a => a.ClientID == id).FirstOrDefaultAsync();
-            if (dbRecord != null)
-            {
-                _dbContext.Clients.Remove(dbRecord);
-                await _dbContext.SaveChangesAsync();
-                return true;
-            }
-            return false;
+            var clientId = new Microsoft.Data.SqlClient.SqlParameter("@ClientID", id);
+            var AccountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", accountID);
+            var data = await _dbContext.Clients.FromSqlRaw("EXEC usp_delete_client_shardDB @AccountID,@ClientID", AccountID, clientId).ToListAsync();
+            return true;
         }
     }
 }

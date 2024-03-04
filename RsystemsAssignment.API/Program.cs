@@ -40,11 +40,44 @@ IConfiguration configuration = new ConfigurationBuilder()
 .AddJsonFile("appsettings.json")
        .Build();
 
-//var shardMapManagerConnectionString = configuration.GetConnectionString("ShardMapManagerConnection");
+var shardMapManagerConnectionString = configuration.GetConnectionString("ShardMapManagerConnection");
 //var shardMapManager = ShardMapManagerFactory.GetSqlShardMapManager(shardMapManagerConnectionString, ShardMapManagerLoadPolicy.Lazy);
 //builder.Services.AddSingleton<ShardMapManager>(shardMapManager);
 
+ShardMapManager shardMapManager;
+bool shardMapManagerExists = ShardMapManagerFactory.TryGetSqlShardMapManager(
+                                    shardMapManagerConnectionString,
+                                    ShardMapManagerLoadPolicy.Lazy,
+                                    out shardMapManager);
 
+if (shardMapManagerExists)
+{
+    Console.WriteLine("Shard Map Manager already exists");
+}
+else
+{
+    // Create the Shard Map Manager.
+    ShardMapManagerFactory.CreateSqlShardMapManager(shardMapManagerConnectionString);
+    Console.WriteLine("Created SqlShardMapManager");
+
+    shardMapManager = ShardMapManagerFactory.GetSqlShardMapManager(
+        shardMapManagerConnectionString,
+        ShardMapManagerLoadPolicy.Lazy);
+}
+
+RangeShardMap<int>shardMap;
+bool shardMapExists = shardMapManager.TryGetRangeShardMap("ShardDB01", out shardMap);
+
+if (shardMapExists)
+{
+    Console.WriteLine($"Shard Map {shardMap.Name} already exists");
+}
+else
+{
+    // The Shard Map does not exist, so create it
+    shardMap = shardMapManager.CreateRangeShardMap<int>("ShardDB01");
+    Console.WriteLine($"Created Shard Map {shardMap.Name}");
+}
 
 builder.Services.Configure<ConfigurationSettings>(configuration.GetSection("ConfigurationSettings"));
 

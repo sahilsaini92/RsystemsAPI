@@ -56,11 +56,11 @@ namespace RsystemsAssignment.API.Controllers
         }
 
         [HttpDelete("Delete")]
-        public async Task<bool> Delete(int id)
+        public async Task<bool> Delete(int appointmentID, int accountID)
         {
             try
             {
-                return await _appointmentService.DeleteAppointmentAsync(id);
+                return await _appointmentService.DeleteAppointmentAsync(appointmentID, accountID);
             }
             catch
             {

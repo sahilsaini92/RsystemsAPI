@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RSystemsAssignment.Data.DTO;
 using RSystemsAssignment.Data.Entities;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +20,13 @@ namespace RsystemsAssignment.Data
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
         }
-       
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Account>().HasNoKey();
+            modelBuilder.Entity<Client>().HasNoKey();
+            modelBuilder.Entity<Appointment>().HasNoKey();
+        }
+
     }
 }

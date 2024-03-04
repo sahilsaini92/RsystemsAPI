@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using RsystemsAssignment.Business.Interfaces;
 using RsystemsAssignment.Data;
 using RsystemsAssignment.Data.DTO;
@@ -26,14 +27,22 @@ namespace RsystemsAssignment.Business.Services
         }
         public async Task<AccountApiResponse> GetAllAsync(int pageNumber, int pageSize)
         {
-            AccountApiResponse apiResponse = new AccountApiResponse();
-            var query = _dbContext.Accounts;
-            apiResponse.TotalCount = query.Count();
-            var data = await query.Skip(pageNumber * pageSize)
-                         .Take(pageSize).ToListAsync();
-            var mappedData = _mapper.Map<List<AccountDTO>>(data);
-            apiResponse.Accounts = mappedData;
-            return apiResponse;
+            try
+            {
+                AccountApiResponse apiResponse = new AccountApiResponse();
+                var data = _dbContext.Accounts.FromSqlRaw("EXEC usp_select_account_shardDB")
+                   .ToList();
+                apiResponse.TotalCount = data.Count;
+                data = data.Skip(pageNumber * pageSize)
+                             .Take(pageSize).ToList();
+                var mappedData = _mapper.Map<List<AccountDTO>>(data);
+                apiResponse.Accounts = mappedData;
+                return apiResponse;
+            }
+            catch(Exception exp)
+            {
+                return null;
+            }
         }
         public async Task<AccountDTO> GetByIdAsync(int id)
         {
@@ -63,13 +72,11 @@ namespace RsystemsAssignment.Business.Services
         {
             try
             {
-                var dbRecord = await _dbContext.Accounts.Where(a => a.AccountID == accountDTO.AccountID).FirstOrDefaultAsync();
-                if (dbRecord != null)
-                {
-                    var mappedData = _mapper.Map(accountDTO, dbRecord);
-                    dbRecord.ModifiedDate = DateTime.UtcNow;
-                    await _dbContext.SaveChangesAsync();
-                }
+
+                var accountName = new Microsoft.Data.SqlClient.SqlParameter("@AccountName", accountDTO.AccountName);
+                var accountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", accountDTO.AccountID);
+                var data = _dbContext.Accounts.FromSqlRaw("EXEC usp_update_account_shardDB @AccountID, @AccountName", accountID, accountName)
+                    .ToList();
                 return null;
             }
             catch (Exception exp)

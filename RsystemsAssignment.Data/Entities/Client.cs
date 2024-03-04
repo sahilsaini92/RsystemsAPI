@@ -13,9 +13,8 @@ namespace RSystemsAssignment.Data.Entities
         public int ClientID { get; set; }
         [Required]
         public string ClientName { get; set; }
-        public Account Account { get; set; }
-        [Required]
         public int AccountID { get; set; }
+        public string AccountName { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? CreatedDate { get; set; }
         [Column(TypeName = "datetime")]

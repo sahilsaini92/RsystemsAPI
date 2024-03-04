@@ -15,6 +15,6 @@ namespace RsystemsAssignment.Business.Interfaces
         Task<AppointmentDTO> AddAppointmentAsync(AppointmentDTO appointmentDTO);
         Task<AppointmentDTO> UpdateAppointmentAsync(AppointmentDTO appointmentDTO);
 
-        Task<bool> DeleteAppointmentAsync(int id);
+        Task<bool> DeleteAppointmentAsync(int appointmentID, int accountID);
     }
 }
