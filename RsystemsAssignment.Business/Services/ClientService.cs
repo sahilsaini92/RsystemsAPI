@@ -25,16 +25,20 @@ namespace RsystemsAssignment.Business.Services
             _dbContext = dbContext;
             _mapper = mapper;
         }
-        public async Task<ClientApiResponse> GetAllAsync(int pageIndex, int pageSize,int accountID)
+        public async Task<ClientApiResponse> GetAllAsync(int pageIndex, int pageSize,int accountID, string? searchValue)
         {
+            if (searchValue == "null")
+            {
+                searchValue = "";
+            }
             ClientApiResponse apiResponse = new ClientApiResponse();
             var parameter = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", accountID);
             var data = await _dbContext.Clients.FromSqlRaw("EXEC usp_select_client_shardDB @AccountID", parameter)
                 .ToListAsync();
            
             apiResponse.TotalCount = data.Count;
-            data = data.Skip(pageIndex * pageSize)
-                         .Take(pageSize).ToList();
+            data = data.Where(x => !string.IsNullOrEmpty(searchValue) ? x.ClientName.ToLower().Contains(searchValue.ToLower()) : true).Skip(pageIndex * pageSize)
+                             .Take(pageSize).ToList();
 
             var mappedData = _mapper.Map<List<ClientDTO>>(data);
             apiResponse.Clients = mappedData;

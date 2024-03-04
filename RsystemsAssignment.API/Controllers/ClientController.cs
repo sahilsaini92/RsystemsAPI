@@ -19,9 +19,9 @@ namespace RsystemsAssignment.API.Controllers
             _clientService = clientService;
         }
         [HttpGet("Index")]
-        public async Task<ClientApiResponse> Index(int pageIndex, int pageSize, int accountID)
+        public async Task<ClientApiResponse> Index(int pageIndex, int pageSize, int accountID, string? searchValue)
         {
-            return await _clientService.GetAllAsync(pageIndex, pageSize,accountID);
+            return await _clientService.GetAllAsync(pageIndex, pageSize,accountID,searchValue);
         }
 
         [HttpGet("Details/id")]

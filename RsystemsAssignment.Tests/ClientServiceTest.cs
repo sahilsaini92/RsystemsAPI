@@ -36,7 +36,7 @@ namespace RsystemsAssignment.Tests
             _mockMapper = new Mock<IMapper>();
             repository = new Mock<IClientService>();
             repository.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(MockData.GetClient());
-            repository.Setup(repo => repo.GetAllAsync(0,25,1)).ReturnsAsync(MockData.GetClients());
+            repository.Setup(repo => repo.GetAllAsync(0,25,1,"")).ReturnsAsync(MockData.GetClients());
             repository.Setup(db => db.AddClientAsync(MockData.GetClient())).ReturnsAsync(MockData.GetClient());
             repository.Setup(x => x.DeleteClientAsync(1, 1)).ReturnsAsync(true);
 
@@ -49,7 +49,7 @@ namespace RsystemsAssignment.Tests
         [Test]
         public async Task GetAllAsync_ShouldReturnListOfClientDTO()
         {
-            var result = await _clientController.Index(0,25,1);
+            var result = await _clientController.Index(0,25,1, "");
             Assert.That(result.TotalCount, Is.EqualTo(3));
             Assert.That(result.Clients.First().AccountID, Is.EqualTo(1));
         }

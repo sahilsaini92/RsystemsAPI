@@ -25,15 +25,19 @@ namespace RsystemsAssignment.Business.Services
             _dbContext = dbContext;
             _mapper = mapper;
         }
-        public async Task<AccountApiResponse> GetAllAsync(int pageNumber, int pageSize)
+        public async Task<AccountApiResponse> GetAllAsync(int pageNumber, int pageSize, string? searchValue)
         {
             try
             {
+                if(searchValue == "null")
+                {
+                    searchValue = "";
+                }
                 AccountApiResponse apiResponse = new AccountApiResponse();
                 var data = _dbContext.Accounts.FromSqlRaw("EXEC usp_select_account_shardDB")
                    .ToList();
                 apiResponse.TotalCount = data.Count;
-                data = data.Skip(pageNumber * pageSize)
+                data = data.Where(x=> !string.IsNullOrEmpty(searchValue) ? x.AccountName.ToLower().Contains(searchValue.ToLower()) : true).Skip(pageNumber * pageSize)
                              .Take(pageSize).ToList();
                 var mappedData = _mapper.Map<List<AccountDTO>>(data);
                 apiResponse.Accounts = mappedData;

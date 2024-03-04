@@ -43,7 +43,7 @@ namespace RsystemsAssignment.Tests
             _mockMapper = new Mock<IMapper>();
             repository = new Mock<IAccountService>();
             repository.Setup(x => x.AddAccountAsync(dto)).ReturnsAsync(MockData.AddAccount());
-            repository.Setup(repo => repo.GetAllAsync(0,25)).ReturnsAsync(MockData.GetAccounts());
+            repository.Setup(repo => repo.GetAllAsync(0,25,"")).ReturnsAsync(MockData.GetAccounts());
 
             _accountController = new AccountController(repository.Object);
             _accountService = new AccountService(_mockDbContext.Object, _mockMapper.Object);
@@ -52,7 +52,7 @@ namespace RsystemsAssignment.Tests
         [Test]
         public async Task GetAllAsync_ShouldReturnListOfAccountDTO()
         {
-            var result = await _accountController.Index(0,25);
+            var result = await _accountController.Index(0,25,"");
             Assert.That(result.TotalCount, Is.EqualTo(3));
             Assert.That(result.Accounts.First().AccountID, Is.EqualTo(1));
         }

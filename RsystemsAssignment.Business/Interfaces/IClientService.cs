@@ -10,7 +10,7 @@ namespace RsystemsAssignment.Business.Interfaces
 {
     public interface IClientService
     {
-        Task<ClientApiResponse> GetAllAsync(int pageIndex, int pageSize, int accountID);
+        Task<ClientApiResponse> GetAllAsync(int pageIndex, int pageSize, int accountID, string? searchValue);
         Task<ClientDTO> GetByIdAsync(int id);
         Task<ClientDTO> AddClientAsync(ClientDTO clientDTO);
         Task<ClientDTO> UpdateClientAsync(ClientDTO clientDTO);
