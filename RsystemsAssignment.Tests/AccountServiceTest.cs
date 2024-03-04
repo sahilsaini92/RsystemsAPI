@@ -31,14 +31,19 @@ namespace RsystemsAssignment.Tests
                 .UseInMemoryDatabase(databaseName: "TestDatabase")
                 .Options;
 
+            var dto = new AccountDTO {
+                AccountID = 1,
+                AccountName = "Google",
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.Now.AddDays(1)
+            };
+
 
             _mockDbContext = new Mock<ApplicationContext>(dbContextOptions);
             _mockMapper = new Mock<IMapper>();
             repository = new Mock<IAccountService>();
-            repository.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(MockData.GetAccount());
+            repository.Setup(x => x.AddAccountAsync(dto)).ReturnsAsync(MockData.AddAccount());
             repository.Setup(repo => repo.GetAllAsync(0,25)).ReturnsAsync(MockData.GetAccounts());
-            repository.Setup(db => db.AddAccountAsync(MockData.GetAccount())).ReturnsAsync(MockData.GetAccount());
-            _mockDbContext.Setup(db => db.SaveChangesAsync(CancellationToken.None)).ReturnsAsync(1); // Return a completed task with a result of 1
 
             _accountController = new AccountController(repository.Object);
             _accountService = new AccountService(_mockDbContext.Object, _mockMapper.Object);
@@ -48,12 +53,11 @@ namespace RsystemsAssignment.Tests
         public async Task GetAllAsync_ShouldReturnListOfAccountDTO()
         {
             var result = await _accountController.Index(0,25);
-            //var result = await _accountService.GetAllAsync();
-
-            // Assert
             Assert.That(result.TotalCount, Is.EqualTo(3));
             Assert.That(result.Accounts.First().AccountID, Is.EqualTo(1));
         }
+
+
 
     }
 }

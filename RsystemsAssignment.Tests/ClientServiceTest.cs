@@ -38,6 +38,8 @@ namespace RsystemsAssignment.Tests
             repository.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(MockData.GetClient());
             repository.Setup(repo => repo.GetAllAsync(0,25,1)).ReturnsAsync(MockData.GetClients());
             repository.Setup(db => db.AddClientAsync(MockData.GetClient())).ReturnsAsync(MockData.GetClient());
+            repository.Setup(x => x.DeleteClientAsync(1, 1)).ReturnsAsync(true);
+
             _mockDbContext.Setup(db => db.SaveChangesAsync(CancellationToken.None)).ReturnsAsync(1); // Return a completed task with a result of 1
 
             _clientController = new ClientController(repository.Object);
@@ -45,11 +47,18 @@ namespace RsystemsAssignment.Tests
         }
 
         [Test]
-        public async Task GetAllAsync_ShouldReturnListOfAccountDTO()
+        public async Task GetAllAsync_ShouldReturnListOfClientDTO()
         {
-            var result = await _clientController.Index(0,25);
+            var result = await _clientController.Index(0,25,1);
             Assert.That(result.TotalCount, Is.EqualTo(3));
             Assert.That(result.Clients.First().AccountID, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task DeleteAsync_ShouldDelete()
+        {
+            var result = await _clientController.Delete(1, 1);
+            Assert.That(result, Is.EqualTo(true));
         }
 
     }

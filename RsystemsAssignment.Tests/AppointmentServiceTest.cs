@@ -37,6 +37,7 @@ namespace RsystemsAssignment.Tests
             repository = new Mock<IAppointmentService>();
             repository.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(MockData.GetAppointment());
             repository.Setup(repo => repo.GetAllAsync(0,25)).ReturnsAsync(MockData.GetAppointments());
+            repository.Setup(x => x.DeleteAppointmentAsync(1, 1)).ReturnsAsync(true);
             repository.Setup(db => db.AddAppointmentAsync(MockData.GetAppointment())).ReturnsAsync(MockData.GetAppointment());
             _mockDbContext.Setup(db => db.SaveChangesAsync(CancellationToken.None)).ReturnsAsync(1); // Return a completed task with a result of 1
 
@@ -51,6 +52,13 @@ namespace RsystemsAssignment.Tests
 
             Assert.That(result.TotalCount, Is.EqualTo(3));
             Assert.That(result.Appointments.First().AppointmentID, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task DeleteAsync_ShouldDelete()
+        {
+            var result = await _appointmentController.Delete(1, 1);
+            Assert.That(result, Is.EqualTo(true));
         }
 
     }

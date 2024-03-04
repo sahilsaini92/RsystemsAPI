@@ -71,7 +71,7 @@ namespace RsystemsAssignment.Business.Services
                 var accountID = new Microsoft.Data.SqlClient.SqlParameter("@AccountID", appointmentDTO.AccountID);
                 var clientID = new Microsoft.Data.SqlClient.SqlParameter("@ClientID", appointmentDTO.ClientID);
                 var appointmentStartTime = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentStartTime", appointmentDTO.AppointmentStartTime.AddDays(1));
-                var appointmentEndTime = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentEndTime", appointmentDTO.AppointmentEndTime);
+                var appointmentEndTime = new Microsoft.Data.SqlClient.SqlParameter("@AppointmentEndTime", appointmentDTO.AppointmentEndTime.AddDays(1));
                 var data = await _dbContext.Appointment.FromSqlRaw("EXEC usp_update_appointment_shardDB @AppointmentID, @AccountID, @ClientID, @AppointmentStartTime, @AppointmentEndTime",appointmentID, accountID, clientID, appointmentStartTime, appointmentEndTime)
                     .ToListAsync();
             }
